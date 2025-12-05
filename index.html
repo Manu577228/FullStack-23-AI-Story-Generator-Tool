@@ -1,69 +1,364 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Story & Image Generator</title>
-    <link rel="stylesheet" href="style.css" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Agentic AI Creator</title>
+
+    <!-- Ghost Font -->
     <link
+      href="https://fonts.googleapis.com/css2?family=Creepster&display=swap"
       rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
     />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
-    />
-    <script type="importmap">
-      {
-        "imports": {
-          "@google/generative-ai": "https://esm.run/@google/generative-ai"
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(
+          135deg,
+          #0a0a0a 0%,
+          #1a1a1a 50%,
+          #0a0a0a 100%
+        );
+        color: #ffffff;
+        min-height: 100vh;
+        padding: 20px;
+        position: relative;
+        overflow-x: hidden;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: repeating-linear-gradient(
+            0deg,
+            rgba(255, 255, 255, 0.03) 0px,
+            transparent 1px,
+            transparent 2px,
+            rgba(255, 255, 255, 0.03) 3px
+          ),
+          repeating-linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.03) 0px,
+            transparent 1px,
+            transparent 2px,
+            rgba(255, 255, 255, 0.03) 3px
+          );
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      /* Final ghost heading */
+      h1 {
+        font-family: "Creepster", cursive;
+        font-size: 3.2rem;
+        font-weight: 400;
+        color: #ffffff;
+        text-shadow: 0 0 3px #ff5555;
+        margin-bottom: 10px;
+        letter-spacing: 2px;
+      }
+
+      .subtitle {
+        font-family: "Creepster", cursive;
+        font-size: 1.3rem;
+        color: #ff8888;
+        text-shadow: 0 0 3px #ff4444;
+        margin-top: 5px;
+        letter-spacing: 2px;
+      }
+
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 2;
+      }
+
+      .avatar-section {
+        text-align: center;
+        margin-bottom: 30px;
+        animation: fadeInDown 0.8s ease;
+      }
+
+      .avatar-wrapper {
+        width: 140px;
+        height: 140px;
+        margin: 0 auto 20px;
+        position: relative;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ffffff 0%, #cccccc 100%);
+        padding: 4px;
+        box-shadow: 0 0 30px rgba(255, 255, 255, 0.3),
+          0 0 60px rgba(255, 255, 255, 0.1),
+          inset 0 0 20px rgba(255, 255, 255, 0.1);
+        animation: pulse 3s ease-in-out infinite;
+      }
+
+      .avatar {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: contain;
+        background: #1a1a1a;
+        border: 3px solid #0a0a0a;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+      }
+
+      .card {
+        background: rgba(26, 26, 26, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 40px;
+        margin-bottom: 40px;
+      }
+
+      label {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 12px;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 140px;
+        padding: 18px;
+        border-radius: 12px;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.5);
+        color: #ffffff;
+      }
+
+      textarea:focus {
+        border-color: rgba(255, 255, 255, 0.4);
+      }
+
+      .controls {
+        margin-top: 24px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
+      .btn {
+        padding: 18px 32px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border: none;
+      }
+
+      .btn-story {
+        background: #ffffff;
+        color: #000000;
+      }
+
+      .btn-photo {
+        background: rgba(0, 0, 0, 0.8);
+        color: #ffffff;
+      }
+
+      #spinner {
+        display: none;
+        text-align: center;
+        margin-top: 30px;
+      }
+
+      .loader {
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(255, 255, 255, 0.1);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      #output img.generated-photo {
+        width: 100%;
+        border-radius: 12px;
+        margin-top: 16px;
+      }
+
+      /* Clean story formatting */
+      .story-output {
+        white-space: normal;
+        line-height: 1.8;
+        font-size: 1.1rem;
+        background: rgba(0, 0, 0, 0.35);
+        padding: 20px;
+        border-left: 4px solid #ffffff;
+        border-radius: 12px;
+        color: #eaeaea;
+        margin-top: 20px;
+      }
+
+      footer {
+        margin-top: 40px;
+        text-align: center;
+        color: #aaaaaa;
+        font-size: 0.95rem;
+        padding: 20px 0;
+      }
+
+      footer a {
+        color: #4aa3ff;
+        font-weight: bold;
+        text-decoration: none;
+      }
+
+      footer a:hover {
+        color: #77c2ff;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="avatar-section">
+        <div class="avatar-wrapper">
+          <img
+            src="https://i.postimg.cc/SKBNcms1/Bharadwaj-removebg-preview.png"
+            class="avatar"
+          />
+        </div>
+
+        <h1>AI STORY CREATOR</h1>
+        <p class="subtitle">Powered by Intelligence</p>
+      </div>
+
+      <div class="card">
+        <label>ENTER YOUR PROMPT:</label>
+        <textarea id="prompt" placeholder="Describe your vision..."></textarea>
+
+        <div class="controls">
+          <button class="btn btn-story" id="genStory">📝 GENERATE STORY</button>
+          <button class="btn btn-photo" id="genImages">🎨 GENERATE IMAGES</button>
+        </div>
+
+        <div id="spinner">
+          <div class="loader"></div>
+          <p>GENERATING...</p>
+        </div>
+
+        <div id="output"></div>
+      </div>
+
+      <footer>
+        © All rights reserved. Story & Image Generator by
+        <a href="https://www.youtube.com/@code-with-Bharadwaj" target="_blank">
+          Bharadwaj
+        </a>
+      </footer>
+    </div>
+
+    <script>
+      const GEMINI_API_KEY = "AIzaSyB6DKywNyzxEqSlFgnRF8Dt60QOODqWsVg";
+      const UNSPLASH_KEY = "";
+
+      const promptEl = document.getElementById("prompt");
+      const spinner = document.getElementById("spinner");
+      const output = document.getElementById("output");
+
+      document.getElementById("genStory").onclick = generateStory;
+      document.getElementById("genImages").onclick = generateImages;
+
+      async function generateStory() {
+        const text = promptEl.value.trim();
+        if (!text) {
+          output.innerHTML = "<p class='error'>⚠️ Please enter a prompt.</p>";
+          return;
+        }
+
+        spinner.style.display = "block";
+        output.innerHTML = "";
+
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+          const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ role: "user", parts: [{ text }] }],
+            }),
+          });
+
+          const data = await response.json();
+
+          const story = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (!story) {
+            output.innerHTML =
+              "<p class='error'>⚠️ Gemini could not generate a story.</p>";
+            return;
+          }
+
+          // Clean + format story output
+          const formatted = story
+            .replace(/\n\n/g, "<br><br>")
+            .replace(/\n/g, "<br>")
+            .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+            .replace(/\*(.*?)\*/g, "<em>$1</em>");
+
+          output.innerHTML = `<div class='story-output'>${formatted}</div>`;
+        } catch (err) {
+          output.innerHTML = "<p class='error'>⚠️ Error generating story.</p>";
+        }
+
+        spinner.style.display = "none";
+      }
+
+      async function generateImages() {
+        const query = promptEl.value.trim();
+        if (!query) {
+          output.innerHTML = "<p class='error'>⚠️ Please enter a prompt.</p>";
+          return;
+        }
+
+        spinner.style.display = "block";
+        output.innerHTML = "";
+
+        if (!UNSPLASH_KEY) {
+          const images = [
+            `https://picsum.photos/seed/${Date.now()}a/600/400`,
+            `https://picsum.photos/seed/${Date.now()}b/600/400`,
+            `https://picsum.photos/seed/${Date.now()}c/600/400`,
+          ];
+
+          output.innerHTML = images
+            .map((url) => `<img class="generated-photo" src="${url}">`)
+            .join("");
+
+          spinner.style.display = "none";
+          return;
         }
       }
     </script>
-  </head>
-  <body>
-    <div class="container">
-      <div class="header">
-        <h1>
-          AI Story Generator by Bharadwaj
-          <img
-            src="https://i.postimg.cc/hP0HLRnx/Manu1-23.jpg"
-            alt="Manu"
-            class="profile-img"
-          />
-        </h1>
-      </div>
-      <div class="story-generator z-depth-5">
-        <div class="input-group">
-          <textarea
-            id="story-input"
-            placeholder="Enter your story prompt here..."
-            rows="10"
-          ></textarea>
-          <button id="generate-story-btn" class="btn purple darken-4">
-            Generate Story
-          </button>
-          <button id="generate-photo-btn" class="btn purple darken-4">
-            Generate Photo
-          </button>
-        </div>
-        <div id="spinner" class="spinner-wrapper">
-          <div class="spinner"></div>
-        </div>
-        <div id="generated-content" class="generated-content"></div>
-      </div>
-      <footer class="footer">
-        <p>
-          &copy; All rights reserved. Story & Image Generator by
-          <span
-            ><a href="https://youtube.com/@code-with-Bharadwaj"
-              >Bharadwaj</a
-            ></span
-          >
-        </p>
-      </footer>
-    </div>
-    <script type="module" src="index.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   </body>
 </html>
