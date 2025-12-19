@@ -11,7 +11,7 @@ from .models import Story
 client = genai.Client()
 
 # -------------------------------------------------
-# Model fallback priority (stable + cheap)
+# Model fallback priority (UNCHANGED)
 # -------------------------------------------------
 MODEL_CANDIDATES = [
     "models/gemini-3-flash-preview",
@@ -20,7 +20,7 @@ MODEL_CANDIDATES = [
 ]
 
 # -------------------------------------------------
-# System Instruction (Story focused)
+# System Instruction (UNCHANGED)
 # -------------------------------------------------
 SYSTEM_INSTRUCTION = """
 You are a professional story writer.
@@ -30,7 +30,7 @@ Focus only on storytelling.
 """
 
 # -------------------------------------------------
-# Helper: Try models one by one
+# Helper: Try models one by one (FIXED)
 # -------------------------------------------------
 def generate_story(prompt: str) -> str:
     for model_id in MODEL_CANDIDATES:
@@ -41,15 +41,16 @@ def generate_story(prompt: str) -> str:
                 config={
                     "system_instruction": SYSTEM_INSTRUCTION,
                     "temperature": 0.7,
-                    "max_output_tokens": 8192,
+                    "max_output_tokens": 2048,
                 },
             )
 
-            if response and response.text:
-                return response.text
+            if response and response.candidates:
+                return response.candidates[0].content.parts[0].text
 
         except Exception:
-            continue
+            print("❌ Model failed:", model_id)
+            traceback.print_exc()
 
     return "Story generation is temporarily unavailable."
 
@@ -70,7 +71,6 @@ def generate_story_api(request):
 
         story = generate_story(prompt)
 
-        # Save (optional)
         Story.objects.create(
             prompt=prompt,
             story=story
