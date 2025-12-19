@@ -1,4 +1,4 @@
-# 🎭 AI Story Studio
+# 🎭 AI Story Studio!
 
 <div align="center">
 
